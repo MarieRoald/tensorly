@@ -31,15 +31,42 @@ jobs:
           python minify.py
           make html
           cd ..
-      - name: Push docs
+      - name: Push doc to website
+        if: success()
         run: |
+          echo 'Documentation was successfully built, updating the website.'
+
+          echo "-- Cloning doc repo"
           # See https://github.community/t/github-actions-bot-email-address/17204/5
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions"
-          git fetch origin gh-pages
-          git checkout gh-pages
+          git clone --quiet https://github.com/tensorly/tensorly.github.io doc_folder
+          echo "-- Updating the content"
+          cd doc_folder
+          echo `pwd`
+          echo `ls ../doc/_build/html`
           git rm -r dev/*
-          cp -r doc/_build/html/* dev
+          echo "Done"
+          mkdir -p dev
+          echo "Copying to folder"
+          cp -r ../doc/_build/html/* dev/
+
+          echo "Pushing to git"
           git add dev
-          git commit -m "Deployed to GitHub Pages"
-          git push --force origin gh-pages
+          git commit -m "Github action: auto-update."
+          git push --force "https://github.com/tensorly/tensorly.github.io"
+      - name: Archive doc build results
+        uses: actions/upload-artifact@v2
+        with:
+          name: doc-build
+          path: ../doc/_build
+          # # See https://github.community/t/github-actions-bot-email-address/17204/5
+          # git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # git config --global user.name "github-actions"
+          # git clone https://github.com/tensorly/tensorly.github.io
+          # git checkout gh-pages
+          # git rm -r dev/*
+          # cp -r doc/_build/html/* dev
+          # git add dev
+          # git commit -m "Deployed to GitHub Pages"
+          # git push --force origin gh-pages
