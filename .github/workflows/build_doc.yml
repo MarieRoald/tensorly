@@ -40,7 +40,7 @@ jobs:
           # See https://github.community/t/github-actions-bot-email-address/17204/5
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions"
-          git clone --quiet https://github.com/tensorly/tensorly.github.io doc_folder
+          git clone https://github.com/tensorly/tensorly.github.io doc_folder
           echo "-- Updating the content"
           cd doc_folder
           echo `pwd`
@@ -56,10 +56,13 @@ jobs:
           git commit -m "Github action: auto-update."
           git push --force origin master
       - name: Archive doc build results
+        if: failure() 
         uses: actions/upload-artifact@v2
         with:
           name: doc-build
-          path: ../doc/_build
+          path: |
+          ../doc/_build
+          ./
           # # See https://github.community/t/github-actions-bot-email-address/17204/5
           # git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # git config --global user.name "github-actions"
