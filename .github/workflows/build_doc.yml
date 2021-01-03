@@ -40,8 +40,8 @@ jobs:
           # See https://github.community/t/github-actions-bot-email-address/17204/5
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions"
-          git clone https://github.com/tensorly/tensorly.github.io.git doc_folder
-          #git clone https://tensorly:{{GITHUB_TOKEN}}@github.com/tensorly/tensorly.github.io.git
+          #git clone https://github.com/tensorly/tensorly.github.io.git doc_folder
+          git clone https://tensorly:{{GITHUB_TOKEN}}@github.com/tensorly/tensorly.github.io.git
           echo "-- Updating the content"
           cd doc_folder
           echo `pwd`
