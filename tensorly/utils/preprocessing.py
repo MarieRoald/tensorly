@@ -19,17 +19,19 @@ def std(tensor, axis=None, keepdims=False, ddof=0):
     """
     shape = T.shape(tensor)
     if axis is None:
-        axis = list(range(len(shape)))
+        axis = tuple(range(len(shape)))
     elif not _is_iterable(axis):
-        axis = [axis]
+        axis = (axis,)
     
-    reduce_axes = (i for i in range(len(shape)) if i in axis)
+    reduce_axes = [i for i in range(len(shape)) if i in axis]
     dofs = 1
-    for axis in reduce_axes:
-        dofs *= shape[axis]
+    for ax in reduce_axes:
+        dofs *= shape[ax]
     dofs -= ddof
 
-    return T.norm(tensor - T.mean) / sqrt(dofs)
+    centered = tensor - T.mean(tensor, axis=axis, keepdims=True)
+    var = T.sum(centered**2, axis=axis, keepdims=keepdims) / dofs
+    return T.sqrt(var)
 
 
 class ProperCenterAndScale:
