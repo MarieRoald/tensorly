@@ -54,7 +54,7 @@ jobs:
           echo "Pushing to git"
           git add dev
           git commit -m "Github action: auto-update."
-          git push --force "https://github.com/tensorly/tensorly.github.io"
+          git push --force "https://github.com/tensorly/tensorly.github.io.git" 
       - name: Archive doc build results
         uses: actions/upload-artifact@v2
         with:
