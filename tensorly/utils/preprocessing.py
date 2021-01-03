@@ -127,3 +127,95 @@ class ProperCenterAndScale:
         self.scale_weight = scale_weight
         self.allow_problematic_scaling = allow_problematic_scaling
         self.weight_kwargs = weight_kwargs
+
+    def fit(self, X):
+        # Compute offset
+        if _is_iterable(self.center_across):
+            center_across = set(self.center_across)
+            assert len(center_across) == len(self.center_across)
+        else:
+            center_across = {center_across}
+        ndim = len(T.shape(X))
+        self.data_shape_ = T.shape(X)
+        assert all(ax < ndim for ax in center_across)
+
+        self.offsets_ = {
+            axis: T.mean(X, axis=axis, keepdims=True) for axis in center_across
+        }
+
+        # Compute scale
+        if not _is_iterable(self.scale_within):
+            scale_within = [scale_within]
+
+        if self.scale_weight == "std":
+            scale_weight = std
+        elif self.scale_weight == "norm":
+            scale_weight = T.norm
+        else:
+            scale_weight = self.scale_weight
+
+        scale_axes = [
+            [i for i in range(ndim) if i != scale_within_ax]
+            for scale_within_ax in scale_within
+        ]
+        self.scales_ = [
+            scale_weight(X, axis=axes, keepdims=True, **self.weight_kwargs)
+            for axes in scale_axes
+        ]
+
+        return self
+    
+    def _check_center_compatibility(self, X):
+        """The subtensors across the center mode(s) must be equal for the new data and the data it was fitted against.
+
+        This means that we can only change the shape of the tensor we center if we
+        have just one offset. 
+        """
+        shape = T.shape(X)
+        for axis, offset in self.offsets_.items():
+            subtensor_shape = [s for ax, s in enumerate(shape) if s != axis]
+            offset_shape = T.shape(offset)
+            offset_shape = [s for ax, s in enumerate(offset_shape) if s != axis]
+            if subtensor_shape != offset_shape:
+                return False
+
+        return True
+
+    def _check_scale_compatibility(self, X):
+        """The length of scale-vectors we obtain from the weight function must be equal to the length of the corresponding mode in the datatensor.
+        """
+        if not _is_iterable(self.scale_within):
+            scale_within = [scale_within]
+
+        shape = T.shape(X)
+        for axis in scale_within:
+            if shape[axis]!= self.data_shape_[axis]:
+                return False
+        return True
+
+    def transform(self, X):
+        # Check that initialised
+        # Check shape
+        assert self._check_center_compatibility(X) and self._check_center_compatibility(X)
+
+        for offset in self.offsets_.values():
+            X = X - offset
+
+        for scale in self.scales_:
+            X = X / scale
+        return X
+
+    def fit_transform(self, X):
+        return self.fit(X).transform(X)
+
+    def inverse_transform(self, X):
+        # Check that initialised
+        # Check shape
+        assert self._check_center_compatibility(X) and self._check_center_compatibility(X)
+
+        for scale in self.scales_[::-1]:
+            X = X * scale
+
+        for offset in self.offsets_.values():
+            X = X + offset
+        return X
